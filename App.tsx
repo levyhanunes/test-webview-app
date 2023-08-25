@@ -1,20 +1,48 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { WebView } from 'react-native-webview';
 
-export default function App() {
+const App: React.FC = () => {
+  const webViewRef = React.useRef<WebView>(null);
+
+  const fetchLocalStorageData = () => {
+    const script = `
+      window.ReactNativeWebView.postMessage(window.localStorage.getItem('web-hub/web_hub/hub_user_session_info') || 'null');
+    `;
+
+    webViewRef.current?.injectJavaScript(script);
+  };
+
+  const handleNavigationStateChange = (navState: any) => {
+    const { url } = navState;
+    if (url?.includes('/home')) {
+      fetchLocalStorageData();
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <WebView
+        source={{ uri: 'https://app.squidit.com.br/' }}
+        style={styles.webview}
+        ref={webViewRef}
+        onNavigationStateChange={handleNavigationStateChange}
+        onMessage={(event) => {
+          Alert.alert('Dados do LocalStorage - USER:', event.nativeEvent.data);
+        }}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#e94589',
   },
+  webview: {
+    flex: 1,
+  }
 });
+
+export default App;
